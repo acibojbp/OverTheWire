@@ -11,7 +11,7 @@ Each directory corresponds to a specific game, with solutions and writeups organ
 
 Explore the challenges I've tackled so far:
 
-- Bandit
+- [Bandit](#bandit-solutions-and-writeups)
 - Krypton
 - Natas
 

@@ -19,4 +19,6 @@ Stay tuned as I continue to add solutions for more Wargames as I play along.
 
 ## Disclaimer
 
-_It's important to note that the solutions and writeups presented here are for educational purposes only. Engaging in any unauthorized activities using the knowledge gained from these solutions is strictly prohibited. Always adhere to ethical guidelines and respect the principles of responsible disclosure when conducting cybersecurity research and practice._
+_All contents presented within this material are performed and demonstrated within a virtualized environment using Kali Linux. Despite this controlled setting, it remains imperative for users to take all necessary precautions to secure their own systems. Engaging in activities without ensuring the security of your environment and interacting with potentially malicious entities can lead to security breaches and compromises._
+
+_It's crucial to understand that the solutions and writeups provided here are exclusively for educational purposes. Utilizing the knowledge and techniques acquired from these materials for unauthorized or malicious activities is strictly forbidden and unlawful. When engaging in cybersecurity research or practice, always adhere to ethical standards, and uphold the principles of responsible disclosure._

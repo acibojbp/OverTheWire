@@ -634,6 +634,7 @@ grep, sort, uniq, strings, base64, tr, tar, gzip, bzip2, xxd, mkdir, cp, mv, fil
 ## Solution
 
 The password is stored in the file **data.txt**
+
 **data.txt** is a hexdump which has been repeatedly compressed.
 
 Checking the contents we see..
@@ -827,4 +828,184 @@ Printing the contents of **data8** we get our password.
 ```
 bandit12@bandit:/tmp/tmp.vg20Qi2LlZ$ cat data8
 The password is wbWdlBxEir4CaE8LaPhauuOo6pwRmrDw
+```
+# Bandit Level 13 → Level 14
+
+## Level Goal
+
+The password for the next level is stored in **/etc/bandit_pass/bandit14 and can only be read by user bandit14**. For this level, you don’t get the next password, but you get a private SSH key that can be used to log into the next level. **Note:** **localhost** is a hostname that refers to the machine you are working on
+
+## Commands you may need to solve this level
+
+ssh, telnet, nc, openssl, s_client, nmap
+
+## Helpful Reading Material
+
+- [SSH/OpenSSH/Keys](https://help.ubuntu.com/community/SSH/OpenSSH/Keys)
+
+## Solution
+
+What we know:
+- The password is stored in /etc/bandit_pass/bandit14
+- Can only be read by user bandit14
+- We get a private ssh key
+
+Checking the home directory for this private ssh key..
+```
+bandit13@bandit:~$ ls
+sshkey.private
+bandit13@bandit:~$ cat sshkey.private | head
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEAxkkOE83W2cOT7IWhFc9aPaaQmQDdgzuXCv+ppZHa++buSkN+
+gg0tcr7Fw8NLGa5+Uzec2rEg0WmeevB13AIoYp0MZyETq46t+jk9puNwZwIt9XgB
+ZufGtZEwWbFWw/vVLNwOXBe4UWStGRWzgPpEeSv5Tb1VjLZIBdGphTIK22Amz6Zb
+ThMsiMnyJafEwJ/T8PQO3myS91vUHEuoOMAzoUID4kN0MEZ3+XahyK0HJVq68KsV
+ObefXG1vvA3GAJ29kxJaqvRfgYnqZryWN7w3CHjNU4c/2Jkp+n8L0SnxaNA+WYA7
+jiPyTF0is8uzMlYQ4l1Lzh/8/MpvhCQF8r22dwIDAQABAoIBAQC6dWBjhyEOzjeA
+```
+
+Reading the `man` pages of `ssh` 
+```
+     -i identity_file
+             Selects a file from which the identity (private key) for public
+             key authentication is read.  You can also specify a public key
+             file to use the corresponding private key that is loaded in
+             ssh-agent(1) when the private key file is not present locally.
+             The default is ~/.ssh/id_rsa, ~/.ssh/id_ecdsa,
+             ~/.ssh/id_ecdsa_sk, ~/.ssh/id_ed25519, ~/.ssh/id_ed25519_sk and
+             ~/.ssh/id_dsa.  Identity files may also be specified on a per-
+             host basis in the configuration file.  It is possible to have
+             multiple -i options (and multiple identities specified in con‐
+             figuration files).  If no certificates have been explicitly
+             specified by the CertificateFile directive, ssh will also try to
+             load certificate information from the filename obtained by ap‐
+             pending -cert.pub to identity filenames.
+```
+
+We can use the given ssh private key to login to the next level.
+Save this to a file
+
+# Bandit Level 14 → Level 15
+
+
+## Level Goal
+
+The password for the next level can be retrieved by submitting the password of the current level to **port 30000 on localhost**.
+
+## Commands you may need to solve this level
+
+ssh, telnet, nc, openssl, s_client, nmap
+
+## Helpful Reading Material
+
+- [How the Internet works in 5 minutes (YouTube)](https://www.youtube.com/watch?v=7_LPdttKXPc) (Not completely accurate, but good enough for beginners)
+- [IP Addresses](http://computer.howstuffworks.com/web-server5.htm)
+- [IP Address on Wikipedia](https://en.wikipedia.org/wiki/IP_address)
+- [Localhost on Wikipedia](https://en.wikipedia.org/wiki/Localhost)
+- [Ports](http://computer.howstuffworks.com/web-server8.htm)
+- [Port (computer networking) on Wikipedia](https://en.wikipedia.org/wiki/Port_(computer_networking))
+
+
+## Solution
+
+What we know:
+- The password for the next level can be retrieved by submitting the password of bandit14 to port 30000 on localhost
+- To access this level we need to use the given ssh key from the previous level.
+
+```
+ssh -i bandit14 bandit14@bandit.labs.overthewire.org -p 2220
+                         _                     _ _ _   
+                        | |__   __ _ _ __   __| (_) |_ 
+                        | '_ \ / _` | '_ \ / _` | | __|
+                        | |_) | (_| | | | | (_| | | |_ 
+                        |_.__/ \__,_|_| |_|\__,_|_|\__|
+                                                       
+
+                      This is an OverTheWire game server. 
+            More information on http://www.overthewire.org/wargames
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+Permissions 0644 for 'bandit14' are too open.
+It is required that your private key files are NOT accessible by others.
+This private key will be ignored.
+Load key "bandit14": bad permissions
+bandit14@bandit.labs.overthewire.org's password: 
+```
+
+We get this error because our ssh key file is not private. We have to make it private, so that only we can read the file. We can do this by changing the permissions of the file. Checking the current permissions we see..
+```
+└─$ ls -l bandit14
+-rw-r--r-- 1 kali kali 1679 Feb 26 23:47 bandit14
+```
+
+> Note :
+> 
+> `-rw-r--r--`: This part represents the file permissions. In this case:
+> 
+> - The first character (`-`) indicates that it is a regular file. If it were a directory, it would show `d`.
+> - The next three characters (`rw-`) represent the permissions for the file owner (`kali` in this case). `rw-` means that the owner has read and write permissions but no execute permissions.
+> - The next three characters (`r--`) represent the permissions for the group (`kali` in this case). `r--` means that the group has only read permissions.
+> - The last three characters (`r--`) represent the permissions for others (users who are neither the owner nor in the group). `r--` means that others also have only read permissions.
+
+
+We need to make the permissions so that only we (the owner) are able to read and write to it. To do this we can use the command `chmod` to change the permissions.
+```
+└─$ chmod 600 bandit14
+└─$ ls -l bandit14
+-rw------- 1 kali kali 1679 Feb 26 23:47 bandit14
+```
+
+We can now see that there are no longer any read or write permissions with the group and others.
+
+> Note :
+> - The first digit (`6`) represents the permissions for the file owner. The value `6` in octal translates to binary `110`, which means the owner has read and write permissions (because `1` represents read and `1` represents write).
+> - The second and third digits (`00`) represent the permissions for the group and others, respectively. Both are set to `0`, meaning they have no permissions (neither read, write, nor execute).
+
+With the proper permissions set to our ssh key file we can now use this to login.
+```
+└─$ ssh -i bandit14 bandit14@bandit.labs.overthewire.org -p 2220
+```
+
+We can get the password for the next level by submitting the password for the current level to localhost port 30000.
+
+We can do this by using the `nc` command, reading the `man` pages we see that..
+```
+SYNOPSIS
+     nc [-46bCDdFhklNnrStUuvZz] [-I length] [-i interval] [-M ttl]
+        [-m minttl] [-O length] [-P proxy_username] [-p source_port]
+        [-q seconds] [-s sourceaddr] [-T keyword] [-V rtable]
+        [-W recvlimit] [-w timeout] [-X proxy_protocol]
+        [-x proxy_address[:port]] [destination] [port]
+
+DESCRIPTION
+     The nc (or netcat) utility is used for just about anything under the
+     sun involving TCP, UDP, or UNIX-domain sockets.  It can open TCP con‐
+     nections, send UDP packets, listen on arbitrary TCP and UDP ports, do
+     port scanning, and deal with both IPv4 and IPv6.  Unlike telnet(1), nc
+     scripts nicely, and separates error messages onto standard error in‐
+     stead of sending them to standard output, as telnet(1) does with some.
+```
+
+The part we are interested in is the syntax. Our destination is localhost and port is 30000.
+Unlike `ssh` we don't need the `-p`. Therefore the full command would be `nc localhost 30000`.
+Running this the terminal would then wait for a stnd input (the password). Since we did not give anything it would prompt us back with wrong password.
+```
+bandit14@bandit:~$ nc localhost 30000
+ 
+Wrong! Please enter the correct current password
+****
+```
+
+We can get the password of the current level from the information from the previous level. It is stored in **/etc/bandit_pass/bandit14**
+```
+bandit14@bandit:~$ cat /etc/bandit_pass/bandit14
+fGrHPx402xGC7U7rXKDaxiWFTOiF0ENq
+```
+To make things easier, we can pipe this to `nc` and we should be able to get our password for the next level.
+```
+bandit14@bandit:~$ cat /etc/bandit_pass/bandit14 | nc localhost 30000
+Correct!
+jN2kgmIXJ6fShzhT2avhotn4Zcka6tnt
 ```

@@ -1009,3 +1009,353 @@ bandit14@bandit:~$ cat /etc/bandit_pass/bandit14 | nc localhost 30000
 Correct!
 jN2kgmIXJ6fShzhT2avhotn4Zcka6tnt
 ```
+
+# Bandit Level 15 → Level 16
+
+## Level Goal
+
+The password for the next level can be retrieved by submitting the password of the current level to **port 30001 on localhost** using SSL encryption.
+
+**Helpful note: Getting “HEARTBEATING” and “Read R BLOCK”? Use -ign_eof and read the “CONNECTED COMMANDS” section in the manpage. Next to ‘R’ and ‘Q’, the ‘B’ command also works in this version of that command…**
+
+## Commands you may need to solve this level
+
+ssh, telnet, nc, openssl, s_client, nmap
+
+## Helpful Reading Material
+
+- [Secure Socket Layer/Transport Layer Security on Wikipedia](https://en.wikipedia.org/wiki/Secure_Socket_Layer)
+- [OpenSSL Cookbook - Testing with OpenSSL](https://www.feistyduck.com/library/openssl-cookbook/online/ch-testing-with-openssl.html)
+
+
+## Solution
+
+What we know :
+- The password can be retrieved by submitting the password of the current level to port 30001 on localhost.
+- Must use SSL encryption
+
+We can use `openssl` for this. Reading the `man` pages we see, 
+
+```
+SYNOPSIS
+       openssl command [ options ... ] [ parameters ... ]
+
+DESCRIPTION
+       OpenSSL is a cryptography toolkit implementing the Secure Sockets
+       Layer (SSL v2/v3) and Transport Layer Security (TLS v1) network
+       protocols and related cryptography standards required by them.
+
+       The openssl program is a command line program for using the various
+       cryptography functions of OpenSSL's crypto library from the shell.
+       It can be used for
+
+        o  Creation and management of private keys, public keys and parameters
+        o  Public key cryptographic operations
+        o  Creation of X.509 certificates, CSRs and CRLs
+        o  Calculation of Message Digests and Message Authentication Codes
+        o  Encryption and Decryption with Ciphers
+        o  SSL/TLS Client and Server Tests
+        o  Handling of S/MIME signed or encrypted mail
+        o  Timestamp requests, generation and verification
+
+       s_client
+           This implements a generic SSL/TLS client which can establish a
+           transparent connection to a remote server speaking SSL/TLS. It's
+           intended for testing purposes only and provides only rudimentary
+           interface functionality but internally uses mostly all
+           functionality of the OpenSSL ssl library.
+```
+
+We use the line `openssl s_client -connect localhost:port`
+We can get the password for the current level in **/etc/bandit_pass/bandit15**
+Pipe that out to the line above and add `-ign_eof`
+```
+bandit15@bandit:~$ cat /etc/bandit_pass/bandit15 | openssl s_client -connect localhost:30001 -ign_eof
+```
+
+We get the password for the next level
+```
+
+    Start Time: 1709257084
+    Timeout   : 7200 (sec)
+    Verify return code: 10 (certificate has expired)
+    Extended master secret: no
+    Max Early Data: 0
+---
+read R BLOCK
+Correct!
+JQttfApK4SeyHwDlI9SXGR50qclOAil1
+
+closed
+```
+
+# Bandit Level 16 → Level 17
+
+## Level Goal
+
+The credentials for the next level can be retrieved by submitting the password of the current level to **a port on localhost in the range 31000 to 32000**. First find out which of these ports have a server listening on them. Then find out which of those speak SSL and which don’t. There is only 1 server that will give the next credentials, the others will simply send back to you whatever you send to it.
+
+## Commands you may need to solve this level
+
+ssh, telnet, nc, openssl, s_client, nmap
+
+## Helpful Reading Material
+
+- [Port scanner on Wikipedia](https://en.wikipedia.org/wiki/Port_scanner)
+
+## Solution
+
+What we know :
+
+- Credentials for next level can be retrieved by submitting the password of the current level to a port on localhost in the range of 31000-32000.
+- We need to find which port is open and which one is speaking SSL. 
+- There is only 1 server that will give the credentials.
+
+For this we first need to know which ports are open in the range given. We can use `nmap` for this. 
+Reading the `man` pages,
+```
+NAME
+       nmap - Network exploration tool and security / port scanner
+
+SYNOPSIS
+       nmap [Scan Type...] [Options] {target specification}
+
+DESCRIPTION
+       Nmap (“Network Mapper”) is an open source tool for network
+       exploration and security auditing. It was designed to rapidly scan
+       large networks, although it works fine against single hosts. 
+
+
+		   PORT SPECIFICATION AND SCAN ORDER:
+             -p <port ranges>: Only scan specified ports
+               Ex: -p22; -p1-65535; -p U:53,111,137,T:21-25,80,139,8080,S:9
+             --exclude-ports <port ranges>: Exclude the specified ports from scanning
+```
+
+We need to specify a target, in this case its localhost.
+Running `nmap` we get, 
+```
+bandit16@bandit:~$ nmap localhost
+Starting Nmap 7.80 ( https://nmap.org ) at 2024-03-01 01:45 UTC
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.00011s latency).
+Not shown: 995 closed ports
+PORT      STATE SERVICE
+22/tcp    open  ssh
+1111/tcp  open  lmsocialserver
+1840/tcp  open  netopia-vo2
+4321/tcp  open  rwhois
+30000/tcp open  ndmps
+
+Nmap done: 1 IP address (1 host up) scanned in 0.08 seconds
+```
+
+It did not detect the specified ports, so we need to tell `nmap` to specifically search at this range.
+```
+bandit16@bandit:~$ nmap localhost -p 31000-32000
+Starting Nmap 7.80 ( https://nmap.org ) at 2024-03-01 01:46 UTC
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.00015s latency).
+Not shown: 996 closed ports
+PORT      STATE SERVICE
+31046/tcp open  unknown
+31518/tcp open  unknown
+31691/tcp open  unknown
+31790/tcp open  unknown
+31960/tcp open  unknown
+
+Nmap done: 1 IP address (1 host up) scanned in 0.11 seconds
+```
+
+Since there are only 5 ports, we can try connecting to each of these one by one, but what's the fun in that. There is a way for us to know what port runs what service, using the `-sV`.
+```
+-sV: Probe open ports to determine service/version info
+```
+
+```
+bandit16@bandit:~$ nmap -sV localhost -p 31000-32000
+Starting Nmap 7.80 ( https://nmap.org ) at 2024-03-01 01:52 UTC
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.00011s latency).
+Not shown: 996 closed ports
+PORT      STATE SERVICE     VERSION
+31046/tcp open  echo
+31518/tcp open  ssl/echo
+31691/tcp open  echo
+31790/tcp open  ssl/unknown
+31960/tcp open  echo
+```
+
+We see that only ports 31518 and 31790 run SSL. Port 31518 only run the echo service. The port we are interested in is port 31790. 
+Connecting to port 31790 using `openssl` we get, 
+```
+bandit16@bandit:~$ cat /etc/bandit_pass/bandit16 | openssl s_client -connect localhost:31790 -ign_eof
+```
+
+```
+Correct!
+-----BEGIN RSA PRIVATE KEY-----
+MIIEogIBAAKCAQEAvmOkuifmMg6HL2YPIOjon6iWfbp7c3jx34YkYWqUH57SUdyJ
+imZzeyGC0gtZPGujUSxiJSWI/oTqexh+cAMTSMlOJf7+BrJObArnxd9Y7YT2bRPQ
+Ja6Lzb558YW3FZl87ORiO+rW4LCDCNd2lUvLE/GL2GWyuKN0K5iCd5TbtJzEkQTu
+DSt2mcNn4rhAL+JFr56o4T6z8WWAW18BR6yGrMq7Q/kALHYW3OekePQAzL0VUYbW
+JGTi65CxbCnzc/w4+mqQyvmzpWtMAzJTzAzQxNbkR2MBGySxDLrjg0LWN6sK7wNX
+x0YVztz/zbIkPjfkU1jHS+9EbVNj+D1XFOJuaQIDAQABAoIBABagpxpM1aoLWfvD
+KHcj10nqcoBc4oE11aFYQwik7xfW+24pRNuDE6SFthOar69jp5RlLwD1NhPx3iBl
+J9nOM8OJ0VToum43UOS8YxF8WwhXriYGnc1sskbwpXOUDc9uX4+UESzH22P29ovd
+d8WErY0gPxun8pbJLmxkAtWNhpMvfe0050vk9TL5wqbu9AlbssgTcCXkMQnPw9nC
+YNN6DDP2lbcBrvgT9YCNL6C+ZKufD52yOQ9qOkwFTEQpjtF4uNtJom+asvlpmS8A
+vLY9r60wYSvmZhNqBUrj7lyCtXMIu1kkd4w7F77k+DjHoAXyxcUp1DGL51sOmama
++TOWWgECgYEA8JtPxP0GRJ+IQkX262jM3dEIkza8ky5moIwUqYdsx0NxHgRRhORT
+8c8hAuRBb2G82so8vUHk/fur85OEfc9TncnCY2crpoqsghifKLxrLgtT+qDpfZnx
+SatLdt8GfQ85yA7hnWWJ2MxF3NaeSDm75Lsm+tBbAiyc9P2jGRNtMSkCgYEAypHd
+HCctNi/FwjulhttFx/rHYKhLidZDFYeiE/v45bN4yFm8x7R/b0iE7KaszX+Exdvt
+SghaTdcG0Knyw1bpJVyusavPzpaJMjdJ6tcFhVAbAjm7enCIvGCSx+X3l5SiWg0A
+R57hJglezIiVjv3aGwHwvlZvtszK6zV6oXFAu0ECgYAbjo46T4hyP5tJi93V5HDi
+Ttiek7xRVxUl+iU7rWkGAXFpMLFteQEsRr7PJ/lemmEY5eTDAFMLy9FL2m9oQWCg
+R8VdwSk8r9FGLS+9aKcV5PI/WEKlwgXinB3OhYimtiG2Cg5JCqIZFHxD6MjEGOiu
+L8ktHMPvodBwNsSBULpG0QKBgBAplTfC1HOnWiMGOU3KPwYWt0O6CdTkmJOmL8Ni
+blh9elyZ9FsGxsgtRBXRsqXuz7wtsQAgLHxbdLq/ZJQ7YfzOKU4ZxEnabvXnvWkU
+YOdjHdSOoKvDQNWu6ucyLRAWFuISeXw9a/9p7ftpxm0TSgyvmfLF2MIAEwyzRqaM
+77pBAoGAMmjmIJdjp+Ez8duyn3ieo36yrttF5NSsJLAbxFpdlc1gvtGCWW+9Cq0b
+dxviW8+TFVEBl1O4f7HVm6EpTscdDxU+bCXWkfjuRb7Dy9GOtt9JPsX8MBTakzh3
+vBgsyi/sN3RqRBcGU40fOoZyfAMT8s1m/uYv52O6IgeuZ/ujbjY=
+-----END RSA PRIVATE KEY-----
+```
+
+We get a private key, save this to a file and make sure to change the permissions so that only we can read it. Same as the previous level. 
+
+# Bandit Level 17 → Level 18
+
+## Level Goal
+
+There are 2 files in the homedirectory: **passwords.old and passwords.new**. The password for the next level is in **passwords.new** and is the only line that has been changed between **passwords.old and passwords.new**
+
+**NOTE: if you have solved this level and see ‘Byebye!’ when trying to log into bandit18, this is related to the next level, bandit19**
+
+## Commands you may need to solve this level
+
+cat, grep, ls, diff
+
+## Solution
+
+What we know : 
+
+- The password for the next level is in passwords.new
+- It is the only line that has been changed between the two files.
+
+To solve this we can use the command `diff`
+
+Reading the `man` pages,
+```
+NAME
+       diff - compare files line by line
+
+SYNOPSIS
+       diff [OPTION]... FILES
+```
+
+```
+bandit17@bandit:~$ ls
+passwords.new  passwords.old
+```
+
+```
+bandit17@bandit:~$ diff passwords.new passwords.old
+42c42
+< hga5tuuCLF6fFzUpnagiMN8ssu9LFrdg
+---
+> p6ggwdNHncnmCNxuAt0KtKVq185ZU7AW
+```
+
+> Note : 
+> 
+> - `42c42`: This line indicates a change between the two files. Specifically:
+>     
+>     - `42` indicates line number 42 in both files.
+>     - `c` indicates a change. This means that the content of line 42 in the first file (`passwords.new`) is different from the content of line 42 in the second file (`passwords.old`).
+> - `< hga5tuuCLF6fFzUpnagiMN8ssu9LFrdg`: This line represents the content of line 42 in `passwords.new`. The line starts with `<`, indicating that it's present in the first file (`passwords.new`) but not in the second file.
+>     
+> - `> p6ggwdNHncnmCNxuAt0KtKVq185ZU7AW`: This line represents the content of line 42 in `passwords.old`. The line starts with `>`, indicating that it's present in the second file (`passwords.old`) but not in the first file.
+
+Therefore the password for the next level is 
+```
+hga5tuuCLF6fFzUpnagiMN8ssu9LFrdg
+```
+
+# Bandit Level 18 → Level 19
+
+## Level Goal
+
+The password for the next level is stored in a file **readme** in the homedirectory. Unfortunately, someone has modified **.bashrc** to log you out when you log in with SSH.
+
+## Commands you may need to solve this level
+
+ssh, ls, cat
+
+```
+  Enjoy your stay!
+
+Byebye !
+Connection to bandit.labs.overthewire.org closed.
+                                                    
+```
+
+What we know :
+
+- Someone modified the .bashrc file to log us out immediately when we login
+- The password is in a readme file in the homedirectory
+
+Reading the `man` pages of `ssh`
+```
+     If a command is specified, it will be executed on the remote host in‐
+     stead of a login shell.  A complete command line may be specified as
+     command, or it may have additional arguments.  If supplied, the argu‐
+     ments will be appended to the command, separated by spaces, before it is
+     sent to the server to be executed.
+```
+
+We don't need shell if we just need to run a few commands, this is especially the case in automated shell scripts. SSH can connect remotely and run commands remotely. 
+We can test this out by running a simple command at the end of the `ssh` line in `" "`
+```
+└─$ sshpass -p `cat bandit18` ssh bandit18@bandit.labs.overthewire.org -p 2220 "ls"        
+                         _                     _ _ _   
+                        | |__   __ _ _ __   __| (_) |_ 
+                        | '_ \ / _` | '_ \ / _` | | __|
+                        | |_) | (_| | | | | (_| | | |_ 
+                        |_.__/ \__,_|_| |_|\__,_|_|\__|
+                                                       
+
+                      This is an OverTheWire game server. 
+            More information on http://www.overthewire.org/wargames
+
+readme
+```
+
+We can see that it shows us the output of our command `ls` which shows that there is indeed a readme file in the home directory.
+
+Let's see if we can print the contents of the readme file, if we can that should give us our password
+```
+└─$ sshpass -p `cat bandit18` ssh bandit18@bandit.labs.overthewire.org -p 2220 "cat readme" 
+                         _                     _ _ _   
+                        | |__   __ _ _ __   __| (_) |_ 
+                        | '_ \ / _` | '_ \ / _` | | __|
+                        | |_) | (_| | | | | (_| | | |_ 
+                        |_.__/ \__,_|_| |_|\__,_|_|\__|
+                                                       
+
+                      This is an OverTheWire game server. 
+            More information on http://www.overthewire.org/wargames
+
+awhqfNnAbc1naukrpqDYcF95h7HoMTrC
+```
+
+>   We can also use SSH to execute commands. Instead of typing the commands directly, we can use `/bin/bash` to start a bash shell or use the `-t` flag to enable a "pseudo-terminal" on the target machine. This allows us to run `/bin/sh`. It's handy when we need to run several commands because we don't have to keep typing the SSH command and password.
+
+```
+└─$ sshpass -p `cat bandit18` ssh bandit18@bandit.labs.overthewire.org -p 2220 /bin/bash
+
+└─$ sshpass -p `cat bandit18` ssh bandit18@bandit.labs.overthewire.org -p 2220 -t /bin/sh 
+```
+
+

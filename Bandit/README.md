@@ -1358,4 +1358,114 @@ awhqfNnAbc1naukrpqDYcF95h7HoMTrC
 └─$ sshpass -p `cat bandit18` ssh bandit18@bandit.labs.overthewire.org -p 2220 -t /bin/sh 
 ```
 
+# Bandit Level 19 → Level 20
+
+## Level Goal
+
+To gain access to the next level, you should use the setuid binary in the homedirectory. Execute it without arguments to find out how to use it. The password for this level can be found in the usual place (/etc/bandit_pass), after you have used the setuid binary.
+
+## Helpful Reading Material
+
+- [setuid on Wikipedia](https://en.wikipedia.org/wiki/Setuid)
+
+## Solution
+
+What we know : 
+
+- There is a setuid binary in the home directory
+- Password can be found in /etc/bandit_pass
+
+Let's see what the setuid binary is
+```
+bandit19@bandit:~$ ls -l
+total 16
+-rwsr-x--- 1 bandit20 bandit19 14876 Oct  5 06:19 bandit20-do
+```
+
+> The three characters (`rws`) represent the file's owner permissions. `rws` indicates that the owner can read, write, and execute the file. Moreover, the `s` bit is set, which is the setuid bit. When set on an executable file, it allows the file to run with the permissions of the file's owner, instead of the permissions of the user executing it.
+> 
+> We can see that the owner of the file is bandit20, and should have permission to read his own password in /etc/bandit_pass/
+> We can exploit this by using this setuid binary to read the password file.
+
+
+Checking what would happen if we run the file
+```
+bandit19@bandit:~$ ./bandit20-do
+Run a command as another user.
+  Example: ./bandit20-do id
+```
+It simply says that we can run a command as another user. Specifically bandit20.
+We can try this out..
+```
+bandit19@bandit:~$ whoami
+bandit19
+bandit19@bandit:~$ ./bandit20-do whoami
+bandit20
+```
+We see that by running `whoami` it outputs that we are bandit19, but by running the setuid binary along with the command we are able to become a different user.
+
+Now to get the password,
+```
+bandit19@bandit:~$ ./bandit20-do cat /etc/bandit_pass/bandit20
+VxCazJaVykI6W36BkBU0mJTCM8rR95XT
+```
+
+  > Setuid binaries pose security risks as they can grant users elevated privileges when executed. They may become gateways for privilege escalation if not managed properly.
+
+# Bandit Level 20 → Level 21
+
+## Level Goal
+
+There is a setuid binary in the homedirectory that does the following: it makes a connection to localhost on the port you specify as a commandline argument. It then reads a line of text from the connection and compares it to the password in the previous level (bandit20). If the password is correct, it will transmit the password for the next level (bandit21).
+
+**NOTE:** Try connecting to your own network daemon to see if it works as you think
+
+## Commands you may need to solve this level
+
+ssh, nc, cat, bash, screen, tmux, Unix ‘job control’ (bg, fg, jobs, &, CTRL-Z, …)
+
+## Solution
+
+What we know : 
+
+- There is a setuid binary in the home directory
+- Makes a connection to localhost on the port we specify 
+- Reads a line of text from the connection and compares it to the password in the previous level (bandit20)
+- If they match, we get the password for bandit21
+
+Looking at the setuid binary in the home directory
+```
+bandit20@bandit:~$ ls
+suconnect
+bandit20@bandit:~$ ./suconnect
+Usage: ./suconnect <portnumber>
+This program will connect to the given port on localhost using TCP. If it receives the correct password from the other side, the next password is transmitted back.
+```
+
+For this we need to setup netcat to listen on a port, the port that our setuid binary will connect to.
+```
+     -l      Listen for an incoming connection rather than initiating a
+             connection to a remote host.  The destination and port to lis‐
+             ten on can be specified either as non-optional arguments, or
+             with options -s and -p respectively.  Cannot be used together
+             with -x or -z.  Additionally, any timeouts specified with the
+             -w option are ignored.
+```
+
+We need to pipe the password to this, so that when our setuid binary connects, it will receive the password and give us the password for the next level.
+```
+bandit20@bandit:~$ cat /etc/bandit_pass/bandit20 | nc -l localhost 1234 &
+```
+The port we specify can be any port. We can make this run in the background with `&`
+
+Now we connect using our setuid binary
+```
+bandit20@bandit:~$ ./suconnect 1234
+Read: VxCazJaVykI6W36BkBU0mJTCM8rR95XT
+Password matches, sending next password
+NvEJF7oVjkddltPSrdKEFOllh9V1IBcq
+[1]+  Done                    cat /etc/bandit_pass/bandit20 | nc -l localhost 1234
+```
+
+
 

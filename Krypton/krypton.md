@@ -43,5 +43,82 @@ We can decode this easily using `base64 -d`
 └─$ cat krypton1 | base64 -d            
 KRYPTONISGREAT
 ```
+# Krypton Level 1 → Level 2
 
+## Level Info
+
+The password for level 2 is in the file ‘krypton2’. It is ‘encrypted’ using a simple rotation. It is also in non-standard ciphertext format. When using alpha characters for cipher text it is normal to group the letters into 5 letter clusters, regardless of word boundaries. This helps obfuscate any patterns. This file has kept the plain text word boundaries and carried them to the cipher text. Enjoy!
+
+## Solution
+
+What we know : 
+- Password for level 2 is in file `krypton2` and is encrypted
+- Simple rotation
+
+Since there is nothing in our home directory, we must first find where this file is located. Using `find / | grep krypton2`. Since there are a lot of errors when running this, we will filter these out using `2>/dev/null`
+```
+krypton1@bandit:~$ find / 2>/dev/null | grep krypton2
+/etc/krypton_pass/krypton2
+/home/krypton2
+/home/krypton2/.profile
+/home/krypton2/.bashrc
+/home/krypton2/.bash_logout
+/krypton/krypton2
+/krypton/krypton2/README
+/krypton/krypton2/krypton3
+/krypton/krypton2/encrypt
+/krypton/krypton2/keyfile.dat
+/krypton/krypton1/krypton2
+```
+
+We see the file and it is in `/krypton/krypton1/`
+
+Going into that folder and checking the files
+```
+krypton1@bandit:~$ cd /krypton/krypton1
+krypton1@bandit:/krypton/krypton1$ ls
+krypton2  README
+```
+
+```
+krypton1@bandit:/krypton/krypton1$ cat krypton2 
+YRIRY GJB CNFFJBEQ EBGGRA
+```
+This is encoded by a simple rotation but we don't know what, maybe the readme will give us clues.
+
+Printing README
+```
+krypton1@bandit:/krypton/krypton1$ cat README 
+Welcome to Krypton!
+
+This game is intended to give hands on experience with cryptography
+and cryptanalysis.  The levels progress from classic ciphers, to modern,
+easy to harder.
+
+Although there are excellent public tools, like cryptool,to perform
+the simple analysis, we strongly encourage you to try and do these
+without them for now.  We will use them in later excercises.
+
+** Please try these levels without cryptool first **
+
+
+The first level is easy.  The password for level 2 is in the file 
+'krypton2'.  It is 'encrypted' using a simple rotation called ROT13.  
+It is also in non-standard ciphertext format.  When using alpha characters for
+cipher text it is normal to group the letters into 5 letter clusters, 
+regardless of word boundaries.  This helps obfuscate any patterns.
+
+This file has kept the plain text word boundaries and carried them to
+the cipher text.
+
+Enjoy!
+```
+
+We now know that it is encrypted using ROT13
+Since this is a common encryption, there are a lot of decoders online.
+But we can do it in the shell with `tr 'A-Za-z' 'N-ZA-Mn-za-m'`
+```
+krypton1@bandit:/krypton/krypton1$ cat krypton2 | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+LEVEL TWO PASSWORD ROTTEN
+```
 

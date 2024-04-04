@@ -122,3 +122,111 @@ krypton1@bandit:/krypton/krypton1$ cat krypton2 | tr 'A-Za-z' 'N-ZA-Mn-za-m'
 LEVEL TWO PASSWORD ROTTEN
 ```
 
+# Krypton Level 2 → Level 3
+
+## Level Info
+
+ROT13 is a simple substitution cipher.
+
+Substitution ciphers are a simple replacement algorithm. In this example of a substitution cipher, we will explore a ‘monoalphebetic’ cipher. Monoalphebetic means, literally, “one alphabet” and you will see why.
+
+This level contains an old form of cipher called a ‘Caesar Cipher’. A Caesar cipher shifts the alphabet by a set number. For example:
+
+```
+plain:  a b c d e f g h i j k ...
+cipher: G H I J K L M N O P Q ...
+```
+
+In this example, the letter ‘a’ in plaintext is replaced by a ‘G’ in the ciphertext so, for example, the plaintext ‘bad’ becomes ‘HGJ’ in ciphertext.
+
+The password for level 3 is in the file krypton3. It is in 5 letter group ciphertext. It is encrypted with a Caesar Cipher. Without any further information, this cipher text may be difficult to break. You do not have direct access to the key, however you do have access to a program that will encrypt anything you wish to give it using the key. If you think logically, this is completely easy.
+
+One shot can solve it!
+
+Have fun.
+
+Additional Information:
+
+The `encrypt` binary will look for the keyfile in your current working directory. Therefore, it might be best to create a working direcory in /tmp and in there a link to the keyfile. As the `encrypt` binary runs setuid `krypton3`, you also need to give `krypton3` access to your working directory.
+
+Here is an example:
+
+```
+krypton2@melinda:~$ mktemp -d
+/tmp/tmp.Wf2OnCpCDQ
+krypton2@melinda:~$ cd /tmp/tmp.Wf2OnCpCDQ
+krypton2@melinda:/tmp/tmp.Wf2OnCpCDQ$ ln -s /krypton/krypton2/keyfile.dat
+krypton2@melinda:/tmp/tmp.Wf2OnCpCDQ$ ls
+keyfile.dat
+krypton2@melinda:/tmp/tmp.Wf2OnCpCDQ$ chmod 777 .
+krypton2@melinda:/tmp/tmp.Wf2OnCpCDQ$ /krypton/krypton2/encrypt /etc/issue
+krypton2@melinda:/tmp/tmp.Wf2OnCpCDQ$ ls
+ciphertext  keyfile.dat
+```
+
+## Solution
+
+What we know : 
+- Password is in krypton3 file
+- Encrypted in unknown number of rotations, Caesar's cipher
+- Encrypt binary will encrypt a message for us using the keyfile.dat
+
+```
+krypton2@bandit:/$ cd /krypton/krypton2
+krypton2@bandit:/krypton/krypton2$ ls
+encrypt  keyfile.dat  krypton3  README
+```
+
+We can see a few files, one of which is our password.
+However, we even though we can read it, we don't understand it, as it is encoded in a Caesar's cipher and we don't know how much it is rotated.
+```
+krypton2@bandit:/krypton/krypton2$ cat krypton3 
+OMQEMDUEQMEK
+```
+
+The readme file has the same content as that on the website.
+
+To solve this, we must first know what is the number of rotations used.
+We are given the encrypt binary which will encrypt a file we give it using the same key used on krypton3.
+We need to create a sample text, for us to decipher the key. Since we cannot create a file in this folder we need to create a temp folder and link `keyfile.dat`
+```
+krypton2@bandit:~$ cd $(mktemp -d)
+krypton2@bandit:/tmp/tmp.WovhpxATwY$ ln -s /krypton/krypton2/keyfile.dat 
+krypton2@bandit:/tmp/tmp.WovhpxATwY$ ls
+keyfile.dat
+```
+
+We can now create a basic file
+```
+krypton2@bandit:/tmp/tmp.WovhpxATwY$ echo ABCD > rot.txt
+krypton2@bandit:/tmp/tmp.WovhpxATwY$ cat rot.txt
+ABCD
+```
+
+Since the encrypt binary is owned by krypton3, it is important that krypton3 has the proper permissions to our temp folder. We can do this using `chmod`
+```
+krypton2@bandit:/tmp/tmp.WovhpxATwY$ chmod 777 .
+krypton2@bandit:/tmp/tmp.WovhpxATwY$ ls -la
+total 408
+drwsrwsrwx   2 krypton2 krypton2   4096 Mar  2 06:35 .
+drwxrwx-wt 140 root     root     405504 Mar  2 06:36 ..
+```
+
+We can now use the encrypt binary to encrypt our sample text and we will figure out the key
+```
+krypton2@bandit:/tmp/tmp.WovhpxATwY$ /krypton/krypton2/encrypt rot.txt
+krypton2@bandit:/tmp/tmp.WovhpxATwY$ ls
+ciphertext  keyfile.dat  rot.txt
+krypton2@bandit:/tmp/tmp.WovhpxATwY$ cat ciphertext 
+MNOP
+```
+
+It shows that ABCD maps to MNOP, which means that the key is 12. Since this is the encryption key we need to convert it to do decryption, which is done the following way 26 -12 = 14.
+We can now use the method on the previous level to get our password.
+
+```
+krypton2@bandit:/tmp/tmp.WovhpxATwY$ cat /krypton/krypton2/krypton3 | tr 'A-Za-z' 'O-ZA-No-za-n'
+CAESARISEASY
+```
+
+

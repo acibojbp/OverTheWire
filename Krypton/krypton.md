@@ -2,7 +2,7 @@
 
 Welcome to the Krypton directory! Here, you'll discover my solutions and insights for each level of the OverTheWire Krypton wargame.
 
-Dive in by tackling the initial challenge of 'Krypton Level 0' and advance through the remaining stages. See how I've enhanced my understanding of cryptographic techniques and sharpened my skills in cryptanalysis as I navigated through these challenges.
+Dive in by tackling the initial challenge of '[Krypton Level 0 → Level 1](#krypton-level-0--level-1)' and advance through the remaining stages. See how I've enhanced my understanding of **cryptographic techniques** and sharpened my skills in **cryptanalysis** as I navigated through these challenges.
 
 ## Disclaimer
 _The insights and solutions presented in this directory are designed exclusively for educational use. They are offered to assist in grasping and comprehending cybersecurity concepts associated with cryptographic methods and cryptanalysis. Engaging in any unauthorized or unethical activities using these solutions is highly discouraged._ 

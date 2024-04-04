@@ -11,8 +11,8 @@ Each directory corresponds to a specific game, with solutions and writeups organ
 
 Explore the challenges I've tackled so far:
 
-- [Bandit](/Bandit/bandit.md#bandit-solutions-and-writeups)
-- Krypton
+- [Bandit](/Bandit/bandit.md)
+- [Krypton](/Krypton/krypton.md)
 - Natas
 
 Stay tuned as I continue to add solutions for more Wargames as I play along.
